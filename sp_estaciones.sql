@@ -43,3 +43,8 @@ IF @accion = 'EDIT'
 
 		SELECT * FROM empresas WHERE id = @idEstacion
 	END
+
+	IF @accion = 'DLET'
+	BEGIN 
+		DELETE FROM empresas WHERE id = @idEstacion
+	END 
