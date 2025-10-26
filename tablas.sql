@@ -41,8 +41,8 @@ CREATE TABLE estaciones (
     FOREIGN KEY (created_by) REFERENCES usuarios(id),
     FOREIGN KEY (updated_by) REFERENCES usuarios(id)
 );
-SELECT * FROM estaciones
-INSERT INTO estaciones select 'Nexus','1122334455','1122334455','calle 7 numero 691','1884','berazategui','buenos aires','1122334455',getdate(),1,getdate(),null,null
+SELECT * FROM empresas
+INSERT INTO empresas select 'Nexus','1122323455','1122234455','calle 7 numero 691','1884','berazategui','buenos aires','1122334455',getdate(),1,getdate(),null,null
 
 -- ------------------------------------------------------------------------------------------------------
 -- Tabla de Empresas
