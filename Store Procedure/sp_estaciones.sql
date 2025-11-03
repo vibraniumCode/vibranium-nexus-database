@@ -93,6 +93,7 @@ BEGIN
 				DELETE FROM empresas WHERE id = @idEstacion
 				SELECT 'OK' AS Resultado, 'Empresa eliminada correctamente' AS Mensaje
 			END 
+
 	END TRY
     BEGIN CATCH
         THROW;
