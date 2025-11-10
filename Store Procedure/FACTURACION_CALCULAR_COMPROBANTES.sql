@@ -1,0 +1,72 @@
+/*
+EXEC CALCULAR_COMPROBANTES_POR_RANGO
+    @ImporteTotal = 50000,
+    @LitrosPromedio = 50,
+    @MargenLitros = 2,
+    @ImporteMin = 4000,
+    @ImporteMax = 12000,
+    @PrecioPorLitro = 10000;
+
+*/
+CREATE OR ALTER PROCEDURE CALCULAR_COMPROBANTES_POR_RANGO
+    @ImporteTotal DECIMAL(18,2),
+    @LitrosPromedio DECIMAL(10,2),
+    @MargenLitros DECIMAL(10,2) = 2,
+    @ImporteMin DECIMAL(18,2),
+    @ImporteMax DECIMAL(18,2),
+    @PrecioPorLitro DECIMAL(18,4) = 10000  -- precio por litro fijo opcional
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE 
+        @Restante DECIMAL(18,2) = @ImporteTotal,
+        @Litros DECIMAL(10,2),
+        @Importe DECIMAL(18,2),
+        @ComprobanteNro INT = 0,
+        @LitroMin DECIMAL(10,2),
+        @LitroMax DECIMAL(10,2);
+
+    SET @LitroMin = @LitrosPromedio - @MargenLitros;
+    SET @LitroMax = @LitrosPromedio + @MargenLitros;
+
+    DECLARE @Comprobantes TABLE (
+        NroComprobante INT IDENTITY(1,1),
+        Litros DECIMAL(10,2),
+        Importe DECIMAL(18,2)
+    );
+
+    WHILE @Restante > 0
+    BEGIN
+        -- Litros aleatorios entre el rango permitido (48 a 52 si promedio=50 y margen=2)
+        SET @Litros = ROUND(RAND() * (@LitroMax - @LitroMin) + @LitroMin, 2);
+
+        -- Importe aleatorio entre el rango definido
+        SET @Importe = ROUND(RAND() * (@ImporteMax - @ImporteMin) + @ImporteMin, 2);
+
+        -- Si supera lo que queda, lo ajustamos
+        IF @Importe > @Restante
+            SET @Importe = @Restante;
+
+        INSERT INTO @Comprobantes (Litros, Importe)
+        VALUES (@Litros, @Importe);
+
+        SET @Restante -= @Importe;
+        SET @ComprobanteNro += 1;
+
+        IF @ComprobanteNro > 1000 BREAK;
+    END;
+
+    -- Resultado detallado
+    SELECT 
+        NroComprobante,
+        Litros,
+        Importe
+    FROM @Comprobantes;
+
+    -- Resultado resumen
+    SELECT 
+        COUNT(*) AS CantidadComprobantes,
+        SUM(Importe) AS TotalCalculado
+    FROM @Comprobantes;
+END;

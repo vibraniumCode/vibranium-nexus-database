@@ -1,5 +1,5 @@
---EXEC [sp_impuestos]
-CREATE OR ALTER PROCEDURE [dbo].[sp_impuestos]
+--EXEC [sp_combustible]
+CREATE OR ALTER PROCEDURE [dbo].[sp_combustible]
 (
 	@id            INT = NULL,
 	@tipo          VARCHAR(60) = NULL,
@@ -12,20 +12,20 @@ BEGIN
 		
 	IF @accion = 'NEW'
 		BEGIN
-			INSERT INTO Timpuestos SELECT @tipo
+			INSERT INTO TCombustible SELECT @tipo
 		END
 
 	IF @accion = 'UPD'
 		BEGIN
-			UPDATE Timpuestos SET tipo = @tipo WHERE id = @id
+			UPDATE TCombustible SET txtDesc = @tipo WHERE idTC = @id
 		END
 
 	IF @accion = 'DLTE'
 		BEGIN
-			DELETE FROM Timpuestos WHERE id = @id
+			DELETE FROM TCombustible WHERE idTC = @id
 		END
 
-	SELECT * FROM Timpuestos
+	SELECT * FROM TCombustible
 
 END
 GO
