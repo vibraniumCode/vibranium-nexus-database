@@ -1,6 +1,6 @@
 /*
 exec sp_detalle_gral 1029
-exec sp_detalle_gral 1029,1,5,12,new
+exec sp_detalle_gral 1029,3,1,12,new,1
 exec sp_detalle_gral 1029,1,5,null,DLET
 */
 
@@ -10,7 +10,8 @@ CREATE OR ALTER PROCEDURE sp_detalle_gral
 	@idCombustible INT = NULL,
 	@idImpuesto INT = NULL,
 	@monto NUMERIC(18,9) = NULL,
-	@accion CHAR(4) = NULL
+	@accion CHAR(4) = NULL,
+	@idAccion INT = NULL
 )
 
 AS
@@ -20,54 +21,125 @@ BEGIN
 	SET NOCOUNT ON;
 
 	BEGIN TRY
-		IF @accion = 'NEW'
+		IF @accion = 'NEW' 
 			BEGIN
-				SET @value = (SELECT 1 FROM empGral WHERE 
-								idEmpresa = @idEmpresa AND
-								idCombustible = @idCombustible AND
-								idImpuesto = @idImpuesto)
-				IF @value IS NULL
+				IF @idAccion = 1
 					BEGIN
-						INSERT INTO empGral 
-							SELECT 
-								 @idEmpresa
-								,@idCombustible
-								,@idImpuesto
-								,@monto
-								,GETDATE()
+						IF EXISTS(SELECT 1 FROM TCombustible WHERE idTC = @idCombustible) --VALIDO SI EXISTE EL COMBUSTIBLE
+							BEGIN
+								SET @value = (SELECT 1 FROM Combustible WHERE idEmpresa = @idEmpresa AND idTipo = @idCombustible) --GUARDO EL VALOR DE 1 = SI / 0 = N0 SOBRE SI YA CONTIENE EL COMBUSTIBLE SELECCIONADO
+								IF @value IS NULL
+									BEGIN
+										--INSERT
+										INSERT INTO Combustible 
+											SELECT 
+												@idCombustible,
+												@monto,
+												@idEmpresa
+								
+										SELECT 'C - Se inserto correctamente' AS message
+										RETURN 0;
+									END
+								ELSE
+									BEGIN
+										RAISERROR('Ya existe el combustible', 16, 1);
+										RETURN;
+									END
+							END
+						ELSE
+							BEGIN
+								RAISERROR('No existe el tipo de combustible', 16, 1);
+								RETURN;
+							END
+					END
+				ELSE IF @idAccion = 2
+					BEGIN
+						IF EXISTS(SELECT 1 FROM Timpuestos WHERE id = @idImpuesto) --VALIDO SI EXISTE EL IMPUESTO
+							BEGIN
+								--GUARDO VALOR PARA VER SI YA TIENE EL IMPUESTO PARA EL COMBUSTIBLE Y LA EMPRESA SELECCIONADO
+								SET @value = (SELECT 1 FROM empGral WHERE 
+												idEmpresa = @idEmpresa AND
+												idCombustible = @idCombustible AND
+												idImpuesto = @idImpuesto)
+								IF @value IS NULL
+									BEGIN
+										--INSERT
+										INSERT INTO empGral 
+											SELECT 
+												 @idEmpresa
+												,@idCombustible
+												,@idImpuesto
+												,@monto
+												,GETDATE()
 
-						RETURN 0;
+										SELECT 'I - Se inserto correctamente' AS message
+										RETURN 0;
+									END
+								ELSE
+									BEGIN
+										RAISERROR('Ya existe el impuesto', 16, 1);
+										RETURN;
+									END
+							END
+						ELSE
+							BEGIN
+								RAISERROR('No existe el tipo de impuesto', 16, 1);
+								RETURN;
+							END
 					END
 				ELSE
 					BEGIN
-						RAISERROR('Ya existe el impuesto', 16, 1);
+						RAISERROR('Falta ingresar el @idAccion', 16, 1);
 						RETURN;
 					END
 			END
 
 		IF @accion = 'DLET'
 			BEGIN
-				DELETE FROM empGral 
-				WHERE
-					idEmpresa = @idEmpresa 
-					AND idCombustible = @idCombustible
-					AND idImpuesto = @idImpuesto
+				IF @idAccion = 1
+					BEGIN
+						DELETE FROM Combustible WHERE idTipo = @idCombustible AND idEmpresa = @idEmpresa
+						SELECT 'C - Se elimino correctamente' AS message
+						RETURN 0;
+					END
+				ELSE IF @idAccion = 2
+					BEGIN
+						DELETE FROM empGral 
+						WHERE
+							idEmpresa = @idEmpresa 
+							AND idCombustible = @idCombustible
+							AND idImpuesto = @idImpuesto
 
-				SELECT 'Se elimino correctamente' AS message
-				RETURN 0;
+						SELECT 'I - Se elimino correctamente' AS message
+						RETURN 0;
+					END
 			END
 
 		IF @accion = 'UPD'
 			BEGIN
-				UPDATE empGral SET 
-					importe = @monto
-				WHERE
-					idEmpresa = @idEmpresa 
-					AND idCombustible = @idCombustible
-					AND idImpuesto = @idImpuesto
+				IF @idAccion = 1
+					BEGIN
+						UPDATE Combustible SET 
+							precio = @monto
+						WHERE
+							idEmpresa = @idEmpresa 
+							AND idTipo = @idCombustible
 
-				SELECT 'Se actualizo correctamente' AS message
-				RETURN 0;
+						SELECT 'PC - Se actualizo correctamente' AS message
+						RETURN 0;
+					END
+				ELSE IF @idAccion = 2
+					BEGIN
+						UPDATE empGral SET 
+							importe = @monto
+						WHERE
+							idEmpresa = @idEmpresa 
+							AND idCombustible = @idCombustible
+							AND idImpuesto = @idImpuesto
+
+						SELECT 'PI - Se actualizo correctamente' AS message
+						RETURN 0;
+					END
 			END
 
 		SELECT 
