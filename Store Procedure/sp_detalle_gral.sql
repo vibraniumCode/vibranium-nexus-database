@@ -1,6 +1,6 @@
 /*
 exec sp_detalle_gral 1029
-exec sp_detalle_gral 1029,3,1,12,new,2
+exec sp_detalle_gral 1029,3,1,12,new,1
 exec sp_detalle_gral 1029,1,1,null,DLET,2
 */
 
@@ -113,7 +113,16 @@ BEGIN
 			BEGIN
 				IF @idAccion = 1
 					BEGIN
-						DELETE FROM Combustible WHERE idTipo = @idCombustible AND idEmpresa = @idEmpresa
+						DELETE FROM empGral 
+						WHERE
+							idEmpresa = @idEmpresa 
+							AND idCombustible = @idCombustible
+
+						DELETE FROM Combustible 
+						WHERE 
+							idTipo = @idCombustible AND 
+							idEmpresa = @idEmpresa
+
 						SELECT 'C - Se elimino correctamente' AS message
 						RETURN 0;
 					END
@@ -180,18 +189,22 @@ BEGIN
 			idCombustible
 
 		SELECT 
-			 tc.txtDesc AS Combustible
+			ROW_NUMBER() OVER (ORDER BY tc.txtDesc) as rn,
+			 tc.idTC as id
+			,tc.txtDesc AS Combustible
 			,c.precio AS Imp_combustible
-			,SUM(tmp.importe) AS Imp_impuesto
-			,SUM(c.precio + tmp.importe) AS Imp_total
+			,ISNULL(SUM(tmp.importe), 0) AS Imp_impuesto
+			,c.precio + ISNULL(SUM(tmp.importe), 0) AS Imp_total
 		FROM Combustible c
 			INNER JOIN TCombustible tc ON tc.idTC = c.idTipo
-			INNER JOIN TMP_CI tmp ON tmp.idCombustible = c.idTipo
+			LEFT JOIN TMP_CI tmp ON tmp.idCombustible = c.idTipo
 		WHERE 
 			c.idEmpresa = @idEmpresa
 		GROUP BY 
-			 tc.txtDesc
+			 tc.idTC 
+			,tc.txtDesc
 			,c.precio
+		ORDER BY tc.txtDesc
 
 		SELECT 
 			  eg.idCombustible
@@ -208,4 +221,3 @@ BEGIN
         THROW;
     END CATCH
 END
-
