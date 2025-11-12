@@ -1,7 +1,7 @@
 /*
 exec sp_detalle_gral 1029
-exec sp_detalle_gral 1029,3,1,12,new,1
-exec sp_detalle_gral 1029,1,5,null,DLET
+exec sp_detalle_gral 1029,3,1,12,new,2
+exec sp_detalle_gral 1029,1,1,null,DLET,2
 */
 
 CREATE OR ALTER PROCEDURE sp_detalle_gral
@@ -20,6 +20,13 @@ DECLARE @value INT
 BEGIN
 	SET NOCOUNT ON;
 
+	DROP TABLE IF EXISTS TMP_CI;
+	CREATE TABLE TMP_CI
+	(
+	 idCombustible INT,
+	 importe NUMERIC(18,2)
+	)
+
 	BEGIN TRY
 		IF @accion = 'NEW' 
 			BEGIN
@@ -36,6 +43,14 @@ BEGIN
 												@idCombustible,
 												@monto,
 												@idEmpresa
+
+										INSERT INTO empGral 
+											SELECT 
+												@idEmpresa,
+												@idCombustible,
+												1,--IVA
+												0.21,
+												GETDATE()
 								
 										SELECT 'C - Se inserto correctamente' AS message
 										RETURN 0;
@@ -154,10 +169,10 @@ BEGIN
 		WHERE 
 			id = @idEmpresa
 		
+		INSERT INTO TMP_CI
 		SELECT 
 			 idCombustible
 			,SUM(importe) AS importe
-		INTO #TMP_CI
 		FROM empGral 
 		WHERE 
 			idEmpresa = @idEmpresa
@@ -171,7 +186,7 @@ BEGIN
 			,SUM(c.precio + tmp.importe) AS Imp_total
 		FROM Combustible c
 			INNER JOIN TCombustible tc ON tc.idTC = c.idTipo
-			INNER JOIN #TMP_CI tmp ON tmp.idCombustible = c.id 
+			INNER JOIN TMP_CI tmp ON tmp.idCombustible = c.idTipo
 		WHERE 
 			c.idEmpresa = @idEmpresa
 		GROUP BY 
