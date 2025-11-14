@@ -1,14 +1,17 @@
 /*
-EXEC CALCULAR_COMPROBANTES_POR_RANGO
-    @ImporteTotal = 50000,
-    @LitrosPromedio = 50,
-    @MargenLitros = 2,
-    @ImporteMin = 4000,
-    @ImporteMax = 12000,
-    @PrecioPorLitro = 10000;
-
+BEGIN TRAN
+	EXEC CALCULAR_COMPROBANTES
+		@IdEmpresa = 1029,
+		@ImporteTotal = 50000,
+		@LitrosPromedio = 50,
+		@MargenLitros = 2,
+		@ImporteMin = 4000,
+		@ImporteMax = 12000,
+		@PrecioPorLitro = 10000;
+ROLLBACK
 */
-CREATE OR ALTER PROCEDURE CALCULAR_COMPROBANTES_POR_RANGO
+CREATE OR ALTER PROCEDURE CALCULAR_COMPROBANTES
+	@IdEmpresa INT,
     @ImporteTotal DECIMAL(18,2),
     @LitrosPromedio DECIMAL(10,2),
     @MargenLitros DECIMAL(10,2) = 2,
@@ -25,13 +28,14 @@ BEGIN
         @Importe DECIMAL(18,2),
         @ComprobanteNro INT = 0,
         @LitroMin DECIMAL(10,2),
-        @LitroMax DECIMAL(10,2);
+        @LitroMax DECIMAL(10,2),
+		@nroTiquet INT;
 
     SET @LitroMin = @LitrosPromedio - @MargenLitros;
     SET @LitroMax = @LitrosPromedio + @MargenLitros;
 
     DECLARE @Comprobantes TABLE (
-        NroComprobante INT IDENTITY(1,1),
+        NroComprobante INT,
         Litros DECIMAL(10,2),
         Importe DECIMAL(18,2)
     );
@@ -48,8 +52,10 @@ BEGIN
         IF @Importe > @Restante
             SET @Importe = @Restante;
 
-        INSERT INTO @Comprobantes (Litros, Importe)
-        VALUES (@Litros, @Importe);
+		EXEC @nroTiquet = sp_crearFactura @IdEmpresa;
+
+        INSERT INTO @Comprobantes (NroComprobante ,Litros, Importe)
+        VALUES (@nroTiquet, @Litros, @Importe);
 
         SET @Restante -= @Importe;
         SET @ComprobanteNro += 1;

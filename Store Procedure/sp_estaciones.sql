@@ -22,7 +22,11 @@ BEGIN
 	BEGIN TRY
 
 		DECLARE @fechaCarga DATE 
+		DECLARE @ValueNro INT
+		DECLARE @UltNro INT
+		
 		SET @fechaCarga = GETDATE()
+		SET @ValueNro = 10000
 
 		IF @accion = 'CTA'
 			BEGIN
@@ -49,6 +53,8 @@ BEGIN
 						RETURN;
 					END
 
+				SET @UltNro = (SELECT ISNULL(MAX(n_factura),0) FROM facturas)
+
 				INSERT INTO empresas 
 				SELECT 
 					 @nomEstacion
@@ -64,6 +70,13 @@ BEGIN
 					,@fechaCarga
 					,NULL
 					,NULL
+
+				SELECT @idEstacion = id FROM empresas WHERE cuit = @cuit
+
+				INSERT INTO FACTURAS 
+					SELECT SUM(@UltNro + @ValueNro), @idEstacion
+				INSERT INTO f_facturas 
+					SELECT SUM(@UltNro + @ValueNro)
 
 				SELECT 
 					 'OK' AS Resultado
