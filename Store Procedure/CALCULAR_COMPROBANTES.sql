@@ -6,8 +6,7 @@ BEGIN TRAN
 		@LitrosPromedio = 50,
 		@MargenLitros = 2,
 		@ImporteMin = 4000,
-		@ImporteMax = 12000,
-		@PrecioPorLitro = 10000;
+		@ImporteMax = 12000
 ROLLBACK
 */
 CREATE OR ALTER PROCEDURE CALCULAR_COMPROBANTES
@@ -17,7 +16,8 @@ CREATE OR ALTER PROCEDURE CALCULAR_COMPROBANTES
     @MargenLitros DECIMAL(10,2) = 2,
     @ImporteMin DECIMAL(18,2),
     @ImporteMax DECIMAL(18,2),
-    @PrecioPorLitro DECIMAL(18,4) = 10000  -- precio por litro fijo opcional
+	@IdCombustible INT
+    --@PrecioPorLitro DECIMAL(18,4) = 10000  -- precio por litro fijo opcional
 AS
 BEGIN
     SET NOCOUNT ON;
