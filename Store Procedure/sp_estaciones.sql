@@ -53,6 +53,13 @@ BEGIN
 						RETURN;
 					END
 
+				IF EXISTS (SELECT 1 FROM empresas WHERE ingBrutos = @ingBrutos)
+					BEGIN
+						RAISERROR('Ya existe una empresa con el mismo IIBB', 16, 1);
+						RETURN;
+					END
+	
+
 				SET @UltNro = (SELECT ISNULL(MAX(n_factura),0) FROM facturas)
 
 				INSERT INTO empresas 
@@ -85,24 +92,35 @@ BEGIN
 
 		IF @accion = 'EDIT'
 			BEGIN
-				UPDATE empresas SET
-					 nombre     = @nomEstacion
-					,cuit       = @cuit 
-					,ingBrutos  = @ingBrutos
-					,direccion  = @direccion
-					,cp         = @cp
-					,localidad  = @localidad
-					,provincia  = @provincia
-					,telefono   = @telefono
-					,Actividad  = @actividad
-					,updated_by = @idUser
-					,updated_at = @fechaCarga
-				WHERE id = @idEstacion
+				DECLARE @value INT
+				SET @value = (SELECT COUNT(1) FROM empresas WHERE id = @idEstacion)
+				IF @value = 0 
+					BEGIN
+						UPDATE empresas SET
+							 nombre     = @nomEstacion
+							,cuit       = @cuit 
+							,ingBrutos  = @ingBrutos
+							,direccion  = @direccion
+							,cp         = @cp
+							,localidad  = @localidad
+							,provincia  = @provincia
+							,telefono   = @telefono
+							,Actividad  = @actividad
+							,updated_by = @idUser
+							,updated_at = @fechaCarga
+						WHERE id = @idEstacion
+					END
+				ELSE
+					BEGIN
+						SELECT 'ERROR' AS Resultado,'Ya existe una estación con el mismo CUIT' AS Mensaje
+						RETURN 0;
+					END
 
 				SELECT * FROM empresas WHERE id = @idEstacion
 			END
 		IF @accion = 'DLET'
 			BEGIN 
+                                DELETE FROM facturas WHERE empresa_id = @idEstacion
 				DELETE FROM empresas WHERE id = @idEstacion
 				SELECT 'OK' AS Resultado, 'Empresa eliminada correctamente' AS Mensaje
 			END 
