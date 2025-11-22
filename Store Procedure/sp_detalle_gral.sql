@@ -174,6 +174,7 @@ BEGIN
 			,localidad
 			,provincia
 			,telefono
+			,FORMAT(actividad, 'dd/MM/yyyy') AS actividad
 		FROM empresas
 		WHERE 
 			id = @idEmpresa
