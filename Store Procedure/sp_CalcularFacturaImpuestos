@@ -1,0 +1,116 @@
+CREATE OR ALTER PROCEDURE sp_CalcularFacturaImpuestos
+(
+    @idEmpresa INT,
+    @idCombustible INT,
+    @litros DECIMAL(18,4),
+    @totalFinal DECIMAL(18,2)
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    --------------------------------------------------------------------
+    -- 1) Traer impuestos reales para ese combustible + empresa
+    --------------------------------------------------------------------
+    IF OBJECT_ID('tempdb..#imp') IS NOT NULL DROP TABLE #imp;
+
+    SELECT 
+        eg.idImpuesto,
+        ti.tipo AS NombreImpuesto
+    INTO #imp
+    FROM EmpGral eg
+    INNER JOIN tImpuestos ti ON ti.id = eg.idImpuesto
+    WHERE eg.idEmpresa = @idEmpresa
+      AND eg.idCombustible = @idCombustible;
+
+    --------------------------------------------------------------------
+    -- 2) Determinar porcentaje realista de impuestos totales (30–60%)
+    --------------------------------------------------------------------
+    DECLARE @porcImpuestos DECIMAL(5,2) =
+        (ABS(CHECKSUM(NEWID())) % 31 + 30) / 100.0;
+
+    DECLARE @totalImpuestos DECIMAL(18,2) =
+        ROUND(@totalFinal * @porcImpuestos, 2);
+
+    --------------------------------------------------------------------
+    -- 3) Generar importes aleatorios por impuesto
+    --------------------------------------------------------------------
+    IF OBJECT_ID('tempdb..#impCalc') IS NOT NULL DROP TABLE #impCalc;
+
+    CREATE TABLE #impCalc (
+        idImpuesto INT,
+        Nombre VARCHAR(100),
+        ImporteTotal DECIMAL(18,2),
+        ImportePorLitro DECIMAL(18,6)
+    );
+
+    DECLARE @cant INT, @i INT = 1, @sumaRand DECIMAL(18,6) = 0;
+
+    SELECT @cant = COUNT(*) FROM #imp;
+
+    --------------------------------------------------------------------
+    -- 3.1 Generar valores aleatorios base para repartir proporcionalmente
+    --------------------------------------------------------------------
+    IF OBJECT_ID('tempdb..#rand') IS NOT NULL DROP TABLE #rand;
+
+    CREATE TABLE #rand (idImpuesto INT, r DECIMAL(18,6));
+
+    INSERT INTO #rand
+    SELECT idImpuesto,
+           (ABS(CHECKSUM(NEWID())) % 100 + 10) / 10.0  -- un número 1.0 – 10.0
+    FROM #imp;
+
+    SELECT @sumaRand = SUM(r) FROM #rand;
+
+    --------------------------------------------------------------------
+    -- 3.2 Calcular monto proporcional para cada impuesto
+    --------------------------------------------------------------------
+    INSERT INTO #impCalc (idImpuesto, Nombre, ImporteTotal, ImportePorLitro)
+    SELECT 
+        r.idImpuesto,
+        i.NombreImpuesto,
+        ROUND(@totalImpuestos * (r.r / @sumaRand), 2) AS ImporteTotal,
+        ROUND(ROUND(@totalImpuestos * (r.r / @sumaRand), 2) / @litros, 6)
+    FROM #rand r
+    INNER JOIN #imp i ON i.idImpuesto = r.idImpuesto;
+
+    --------------------------------------------------------------------
+    -- 4) Calcular neto del combustible (total - impuestos)
+    --------------------------------------------------------------------
+    DECLARE @impuestosSum DECIMAL(18,2);
+    SELECT @impuestosSum = SUM(ImporteTotal) FROM #impCalc;
+
+    DECLARE @netoTotal DECIMAL(18,2) = ROUND(@totalFinal - @impuestosSum, 2);
+
+    --------------------------------------------------------------------
+    -- 5) Valores por litro
+    --------------------------------------------------------------------
+    DECLARE @netoPorLitro DECIMAL(18,6) = ROUND(@netoTotal / @litros, 6);
+
+    --------------------------------------------------------------------
+    -- 6) RESULTADO 1: DETALLE POR LITRO
+    --------------------------------------------------------------------
+    SELECT
+        @litros AS Litros,
+        @totalFinal AS TotalFinal,
+        ROUND(@totalFinal / @litros, 6) AS PrecioFinalPorLitro,
+        @netoPorLitro AS NetoPorLitro;
+
+    --------------------------------------------------------------------
+    -- 7) RESULTADO 2: IMPUESTOS DINÁMICOS
+    --------------------------------------------------------------------
+    SELECT
+        Nombre AS Tipo,
+        ImportePorLitro,
+        ImporteTotal
+    FROM #impCalc;
+
+    --------------------------------------------------------------------
+    -- 8) RESULTADO 3: TOTALES
+    --------------------------------------------------------------------
+    SELECT
+        @netoTotal AS NetoTotal,
+        @impuestosSum AS ImpuestosTotales,
+        @totalFinal AS TotalReconstruido;
+END
+GO
