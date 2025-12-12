@@ -6,10 +6,10 @@ BEGIN TRAN
 		@LitrosPromedio = 50,
 		@MargenLitros = 2,
 		@ImporteMin = 4000,
-		@ImporteMax = 12000
+		@ImporteMax = 12000,@IdCombustible=8
 ROLLBACK
 */
-CREATE OR ALTER PROCEDURE CALCULAR_COMPROBANTES
+ ALTER PROCEDURE CALCULAR_COMPROBANTES
 	@IdEmpresa INT,
     @ImporteTotal DECIMAL(18,2),
     @LitrosPromedio DECIMAL(10,2),
@@ -29,10 +29,14 @@ BEGIN
         @ComprobanteNro INT = 0,
         @LitroMin DECIMAL(10,2),
         @LitroMax DECIMAL(10,2),
-		@nroTiquet INT;
+		@nroTiquet INT,
+		@grupoFactura INT,
+		@FechaActual DATETIME = GETDATE(),
+		@HoraActual VARCHAR(8) = CONVERT(VARCHAR(8), GETDATE(), 108);
 
     SET @LitroMin = @LitrosPromedio - @MargenLitros;
     SET @LitroMax = @LitrosPromedio + @MargenLitros;
+	SET @grupoFactura = (SELECT CASE WHEN ID_GRUPO = 1 THEN 1 ELSE ID_GRUPO + 1 END FROM GRUPO_FACTURA)
 
     DECLARE @Comprobantes TABLE (
         NroComprobante INT,
@@ -64,15 +68,29 @@ BEGIN
     END;
 
     -- Resultado detallado
+	INSERT INTO COMPROBANTE_HISTORICO
     SELECT 
         NroComprobante,
         Litros,
-        Importe
+        Importe,
+		@grupoFactura,
+		CAST(@FechaActual AS DATE),  
+		CONVERT(VARCHAR(8), DATEADD(HOUR, +3, GETDATE()), 108)
+
     FROM @Comprobantes;
+	
+	UPDATE GRUPO_FACTURA SET ID_GRUPO = ID_GRUPO + 1
+
+	SELECT 
+		N_FACTURA AS NroComprobante,
+		N_LITROS  AS Litros,
+		IMPORTE   AS Importe 
+	FROM COMPROBANTE_HISTORICO
 
     -- Resultado resumen
     SELECT 
         COUNT(*) AS CantidadComprobantes,
         SUM(Importe) AS TotalCalculado
     FROM @Comprobantes;
+
 END;
