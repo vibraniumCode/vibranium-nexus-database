@@ -1,4 +1,14 @@
-CREATE OR ALTER PROCEDURE sp_CalcularFacturaImpuestos
+USE [NexusDB]
+GO
+
+/****** Object:  StoredProcedure [dbo].[sp_CalcularFacturaImpuestos]    Script Date: 19/12/2025 17:27:31 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE   PROCEDURE [dbo].[sp_CalcularFacturaImpuestos]
 (
     @idEmpresa INT,
     @idCombustible INT,
@@ -113,4 +123,7 @@ BEGIN
         @impuestosSum AS ImpuestosTotales,
         @totalFinal AS TotalReconstruido;
 END
+
 GO
+
+
