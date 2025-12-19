@@ -1,0 +1,17 @@
+USE [NexusDB]
+GO
+
+/****** Object:  Table [dbo].[f_facturas]    Script Date: 19/12/2025 17:01:28 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dbo].[f_facturas](
+	[num_factura] [bigint] NOT NULL
+) ON [PRIMARY]
+
+GO
+
+
