@@ -1,17 +1,31 @@
-
-CREATE TABLE facturas (
-	id_facturas INT IDENTITY(1,1) PRIMARY KEY,
-	n_factura BIGINT NOT NULL UNIQUE,
-	empresa_id INT NOT NULL,
-	FOREIGN KEY (empresa_id) REFERENCES empresas(id)
-);
-
-CREATE TABLE f_facturas (
-	num_factura BIGINT NOT NULL 
-);
+USE [NexusDB]
 GO
 
-select * from facturas
-select * from f_facturas
-select * from empresas
+/****** Object:  Table [dbo].[facturas]    Script Date: 19/12/2025 17:06:05 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dbo].[facturas](
+	[id_facturas] [int] IDENTITY(1,1) NOT NULL,
+	[n_factura] [bigint] NOT NULL,
+	[empresa_id] [int] NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id_facturas] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY],
+UNIQUE NONCLUSTERED 
+(
+	[n_factura] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+
+ALTER TABLE [dbo].[facturas]  WITH CHECK ADD FOREIGN KEY([empresa_id])
+REFERENCES [dbo].[empresas] ([id])
+GO
+
 
