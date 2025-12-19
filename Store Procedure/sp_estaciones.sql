@@ -1,5 +1,15 @@
+USE [NexusDB]
+GO
 
-CREATE OR ALTER PROCEDURE [dbo].[sp_estaciones]
+/****** Object:  StoredProcedure [dbo].[sp_estaciones]    Script Date: 19/12/2025 17:47:53 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+CREATE   PROCEDURE [dbo].[sp_estaciones]
 (
 	@nomEstacion VARCHAR(50) = NULL,
 	@cuit        VARCHAR(20)  = NULL,
@@ -59,9 +69,9 @@ BEGIN
 						RETURN;
 					END
 	
-
+				SELECT ISNULL(MAX(n_factura),0) FROM facturas
 				SET @UltNro = (SELECT ISNULL(MAX(n_factura),0) FROM facturas)
-
+				
 				INSERT INTO empresas 
 				SELECT 
 					 @nomEstacion
@@ -79,6 +89,7 @@ BEGIN
 					,NULL
 
 				SELECT @idEstacion = id FROM empresas WHERE cuit = @cuit
+				select @idEstacion
 
 				INSERT INTO FACTURAS 
 					SELECT SUM(@UltNro + @ValueNro), @idEstacion
@@ -130,4 +141,7 @@ BEGIN
         THROW;
     END CATCH
 END
+
 GO
+
+
