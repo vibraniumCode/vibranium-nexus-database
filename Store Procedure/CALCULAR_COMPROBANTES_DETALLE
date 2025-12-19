@@ -1,0 +1,145 @@
+USE [NexusDB]
+GO
+
+/****** Object:  StoredProcedure [dbo].[CALCULAR_COMPROBANTES_DETALLE]    Script Date: 19/12/2025 17:20:05 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+/*
+	exec CALCULAR_COMPROBANTES_DETALLE 1,10225,50,8,50000
+*/
+
+CREATE PROCEDURE [dbo].[CALCULAR_COMPROBANTES_DETALLE]
+(
+    @IdEmpresa INT,
+    @NroComprobante INT,
+    @IdCombustible INT,
+    @PrecioCombustible DECIMAL(18,2), -- YA LO PASÁS
+    @ImporteTotal DECIMAL(18,2)       -- TOTAL FINAL YA CERRADO
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -------------------------------------------------------------------
+    -- 1. IMPUESTOS DEFINIDOS PARA ESTE COMBUSTIBLE
+    -------------------------------------------------------------------
+    DECLARE @Impuestos TABLE (
+        Id INT IDENTITY(1,1),
+        Nombre VARCHAR(100)
+    );
+
+    INSERT INTO @Impuestos (Nombre)
+    SELECT DISTINCT t.tipo
+    FROM empGral g
+    INNER JOIN timpuestos t ON t.id = g.idImpuesto
+    WHERE g.IdCombustible = @IdCombustible;
+
+    -------------------------------------------------------------------
+    -- 2. CALCULAR IMPORTE TOTAL DE IMPUESTOS (TOTAL - PRECIO)
+    -------------------------------------------------------------------
+    DECLARE @TotalImpuestos DECIMAL(18,2);
+    SET @TotalImpuestos = @ImporteTotal - @PrecioCombustible;
+
+    IF @TotalImpuestos < 0
+    BEGIN
+        RAISERROR('El total no puede ser menor al precio del combustible.', 16, 1);
+        RETURN;
+    END;
+
+    -------------------------------------------------------------------
+    -- 3. CALCULAR IVA SI EXISTE
+    -------------------------------------------------------------------
+    DECLARE 
+        @IVA DECIMAL(18,2) = 0,
+        @TieneIVA BIT = 0;
+
+    IF EXISTS(SELECT 1 FROM @Impuestos WHERE Nombre = 'IVA')
+    BEGIN
+        SET @TieneIVA = 1;
+        SET @IVA = ROUND(@PrecioCombustible * 0.21, 2);
+        SET @TotalImpuestos = @TotalImpuestos - @IVA;
+    END
+
+    -------------------------------------------------------------------
+    -- 4. REPARTIR IMPUESTOS RESTANTES ALEATORIAMENTE
+    -------------------------------------------------------------------
+    DECLARE 
+        @CantidadImpuestos INT,
+        @Acumulado DECIMAL(18,2) = 0,
+        @Random DECIMAL(18,6),
+        @Importe DECIMAL(18,2),
+        @i INT = 1;
+
+    SELECT @CantidadImpuestos = COUNT(*) 
+    FROM @Impuestos 
+    WHERE Nombre <> 'IVA';
+
+    IF @CantidadImpuestos < 0 SET @CantidadImpuestos = 0;
+
+    DECLARE @Detalle TABLE (
+        Impuesto VARCHAR(100),
+        Importe DECIMAL(18,2)
+    );
+
+    -------------------------------------------------------------------
+    -- 5. ASIGNAR IVA PRIMERO (SI EXISTE)
+    -------------------------------------------------------------------
+    IF @TieneIVA = 1
+    BEGIN
+        INSERT INTO @Detalle (Impuesto, Importe)
+        VALUES ('IVA', @IVA);
+    END
+
+    -------------------------------------------------------------------
+    -- 6. REPARTIR EL RESTO DE LOS IMPUESTOS DE FORMA ALEATORIA
+    -------------------------------------------------------------------
+    WHILE @i <= @CantidadImpuestos
+    BEGIN
+        IF @i < @CantidadImpuestos
+        BEGIN
+            SET @Random = RAND() * 0.8 + 0.1; -- entre 10% y 90%
+            SET @Importe = ROUND(@TotalImpuestos * @Random, 2);
+
+            INSERT INTO @Detalle (Impuesto, Importe)
+            SELECT Nombre, @Importe 
+            FROM @Impuestos 
+            WHERE Id = (SELECT MIN(Id) FROM @Impuestos WHERE Nombre <> 'IVA');
+
+            SET @Acumulado += @Importe;
+        END
+        ELSE
+        BEGIN
+            -- último impuesto: el resto exacto
+            SET @Importe = @TotalImpuestos - @Acumulado;
+
+            INSERT INTO @Detalle (Impuesto, Importe)
+            SELECT Nombre, @Importe 
+            FROM @Impuestos 
+            WHERE Id = (SELECT MIN(Id) FROM @Impuestos WHERE Nombre <> 'IVA');
+        END
+
+        DELETE FROM @Impuestos WHERE Nombre <> 'IVA' AND Id = (SELECT MIN(Id) FROM @Impuestos WHERE Nombre <> 'IVA');
+        SET @i += 1;
+    END
+
+    -------------------------------------------------------------------
+    -- 7. RESULTADO FINAL
+    -------------------------------------------------------------------
+    SELECT
+        @NroComprobante AS NroComprobante,
+        @PrecioCombustible AS PrecioCombustible,
+        @IVA AS IVA;
+
+    SELECT * FROM @Detalle;
+
+    SELECT 
+        @NroComprobante AS NroComprobante,
+        @PrecioCombustible +
+        (SELECT SUM(Importe) FROM @Detalle) AS TotalReconstruido;
+END;
+
+GO
