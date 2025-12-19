@@ -1,29 +1,42 @@
-CREATE TABLE usuarios
-(
-	id INT IDENTITY(1,1) PRIMARY KEY,
-	nombre VARCHAR(100),
-	usuario VARCHAR(10) UNIQUE,
-	password VARCHAR(255),
-	email VARCHAR(100) UNIQUE,
-	activo BIT DEFAULT 1,
-	fechaRegistro DATETIME DEFAULT GETDATE(),
-	ultimo_login DATETIME NULL
-)
-
---INSERT INTO usuarios SELECT 'Marcos Lopez', 'mlopez', '$2b$10$JncrtnTwCQhqEhdhSbjVBe3b/qSLidYFsR/B8n1gDt.0uoAwvJSC6','vibraniumcode@gmail.com',1,getdate(),null
-select * from usuarios
-
-ALTER TABLE estaciones 
-ADD CONSTRAINT FK_estaciones_created_by 
-FOREIGN KEY (created_by) 
-REFERENCES usuarios(id) 
-ON DELETE NO ACTION
-ON UPDATE NO ACTION;
-
-ALTER TABLE estaciones 
-ADD CONSTRAINT FK_estaciones_updated_by 
-FOREIGN KEY (updated_by) 
-REFERENCES usuarios(id) 
-ON DELETE NO ACTION
-ON UPDATE NO ACTION;
+USE [NexusDB]
 GO
+
+/****** Object:  Table [dbo].[usuarios]    Script Date: 19/12/2025 17:14:49 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+SET ANSI_PADDING ON
+GO
+
+CREATE TABLE [dbo].[usuarios](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[nombre] [varchar](100) NULL,
+	[usuario] [varchar](10) NULL,
+	[password] [varchar](255) NULL,
+	[email] [varchar](100) NULL,
+	[activo] [bit] NULL DEFAULT ((1)),
+	[fechaRegistro] [datetime] NULL DEFAULT (getdate()),
+	[ultimo_login] [datetime] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY],
+UNIQUE NONCLUSTERED 
+(
+	[usuario] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY],
+UNIQUE NONCLUSTERED 
+(
+	[email] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+
+SET ANSI_PADDING OFF
+GO
+
+
