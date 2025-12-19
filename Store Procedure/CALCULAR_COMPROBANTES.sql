@@ -1,3 +1,13 @@
+USE [NexusDB]
+GO
+
+/****** Object:  StoredProcedure [dbo].[CALCULAR_COMPROBANTES]    Script Date: 19/12/2025 17:17:35 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
 /*
 BEGIN TRAN
 	EXEC CALCULAR_COMPROBANTES
@@ -9,7 +19,7 @@ BEGIN TRAN
 		@ImporteMax = 12000,@IdCombustible=8
 ROLLBACK
 */
- ALTER PROCEDURE CALCULAR_COMPROBANTES
+ CREATE PROCEDURE [dbo].[CALCULAR_COMPROBANTES]
 	@IdEmpresa INT,
     @ImporteTotal DECIMAL(18,2),
     @LitrosPromedio DECIMAL(10,2),
@@ -31,8 +41,8 @@ BEGIN
         @LitroMax DECIMAL(10,2),
 		@nroTiquet INT,
 		@grupoFactura INT,
-		@FechaActual DATETIME = GETDATE(),
-		@HoraActual VARCHAR(8) = CONVERT(VARCHAR(8), GETDATE(), 108);
+		@FechaActual VARCHAR(10) = CONVERT(VARCHAR(10), CAST(DATEADD(HOUR, -3, GETDATE()) AS DATE), 103),
+		@HoraActual VARCHAR(8) = CONVERT(VARCHAR(8), DATEADD(HOUR, +3, GETDATE()), 108)
 
     SET @LitroMin = @LitrosPromedio - @MargenLitros;
     SET @LitroMax = @LitrosPromedio + @MargenLitros;
@@ -74,8 +84,10 @@ BEGIN
         Litros,
         Importe,
 		@grupoFactura,
-		CAST(@FechaActual AS DATE),  
-		CONVERT(VARCHAR(8), DATEADD(HOUR, +3, GETDATE()), 108)
+		@FechaActual,
+		@HoraActual
+		--CAST(@FechaActual AS DATE),  
+		--CONVERT(VARCHAR(8), DATEADD(HOUR, +3, GETDATE()), 108)
 
     FROM @Comprobantes;
 	
@@ -94,3 +106,6 @@ BEGIN
     FROM @Comprobantes;
 
 END;
+GO
+
+
