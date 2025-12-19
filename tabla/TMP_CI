@@ -1,0 +1,18 @@
+USE [NexusDB]
+GO
+
+/****** Object:  Table [dbo].[TMP_CI]    Script Date: 19/12/2025 17:14:13 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dbo].[TMP_CI](
+	[idCombustible] [int] NULL,
+	[importe] [numeric](18, 2) NULL
+) ON [PRIMARY]
+
+GO
+
+
