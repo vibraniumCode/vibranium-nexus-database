@@ -1,0 +1,28 @@
+USE [NexusDB]
+GO
+
+/****** Object:  Table [dbo].[COMPROBANTE_HISTORICO]    Script Date: 19/12/2025 16:50:56 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+SET ANSI_PADDING ON
+GO
+
+CREATE TABLE [dbo].[COMPROBANTE_HISTORICO](
+	[N_FACTURA] [int] NULL,
+	[N_LITROS] [decimal](10, 2) NULL,
+	[IMPORTE] [decimal](18, 2) NULL,
+	[ID_GRUPO] [int] NULL,
+	[FECHA] [varchar](10) NULL,
+	[HORA] [varchar](8) NULL
+) ON [PRIMARY]
+
+GO
+
+SET ANSI_PADDING OFF
+GO
+
+
