@@ -1,0 +1,17 @@
+USE [NexusDB]
+GO
+
+/****** Object:  Table [dbo].[GRUPO_FACTURA]    Script Date: 19/12/2025 17:08:58 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dbo].[GRUPO_FACTURA](
+	[ID_GRUPO] [int] NULL
+) ON [PRIMARY]
+
+GO
+
+
