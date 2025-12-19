@@ -1,10 +1,20 @@
+USE [NexusDB]
+GO
+
+/****** Object:  StoredProcedure [dbo].[sp_detalle_gral]    Script Date: 19/12/2025 17:47:04 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
 /*
-exec sp_detalle_gral 1029
+exec sp_detalle_gral 50
 exec sp_detalle_gral 1029,3,1,12,new,1
 exec sp_detalle_gral 1029,1,1,null,DLET,2
 */
 
-CREATE OR ALTER PROCEDURE sp_detalle_gral
+CREATE   PROCEDURE [dbo].[sp_detalle_gral]
 (
 	@idEmpresa INT,
 	@idCombustible INT = NULL,
@@ -222,3 +232,6 @@ BEGIN
         THROW;
     END CATCH
 END
+GO
+
+
