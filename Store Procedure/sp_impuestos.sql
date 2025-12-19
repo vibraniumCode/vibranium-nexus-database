@@ -1,5 +1,15 @@
+USE [NexusDB]
+GO
+
+/****** Object:  StoredProcedure [dbo].[sp_impuestos]    Script Date: 19/12/2025 17:48:21 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
 --EXEC [sp_impuestos]
-CREATE OR ALTER PROCEDURE [dbo].[sp_impuestos]
+CREATE   PROCEDURE [dbo].[sp_impuestos]
 (
 	@id            INT = NULL,
 	@tipo          VARCHAR(60) = NULL,
@@ -22,12 +32,18 @@ BEGIN
 
 	IF @accion = 'DLTE'
 		BEGIN
+			IF EXISTS(SELECT 1 FROM empgral WHERE idImpuesto = @id)
+				BEGIN
+					SELECT 'ERROR' AS Resultado, 'No se puede eliminar porque esta enlazada a una estación.'  AS Mensaje
+					RETURN 0;
+				END
 			DELETE FROM Timpuestos WHERE id = @id
 		END
 
 	SELECT * FROM Timpuestos
 
 END
+
 GO
 
 
