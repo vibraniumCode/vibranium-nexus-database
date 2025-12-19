@@ -1,10 +1,20 @@
+USE [NexusDB]
+GO
+
+/****** Object:  StoredProcedure [dbo].[sp_crearFactura]    Script Date: 19/12/2025 17:44:18 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
 /*
 begin tran
 	exec sp_crearFactura 1029
 rollback
 */
 
-CREATE OR ALTER PROCEDURE sp_crearFactura (
+CREATE   PROCEDURE [dbo].[sp_crearFactura] (
 	@empresa_id INT --parametro que le voy a pasar al sp
 	)
 AS
@@ -32,3 +42,6 @@ BEGIN
     EXEC sp_crearFactura @empresa_id;
 END 
 END
+GO
+
+
