@@ -1,0 +1,24 @@
+USE [NexusDB]
+GO
+
+/****** Object:  Table [dbo].[TCombustible]    Script Date: 19/12/2025 17:09:33 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+SET ANSI_PADDING ON
+GO
+
+CREATE TABLE [dbo].[TCombustible](
+	[idTC] [int] IDENTITY(1,1) NOT NULL,
+	[txtDesc] [varchar](50) NULL
+) ON [PRIMARY]
+
+GO
+
+SET ANSI_PADDING OFF
+GO
+
+
