@@ -1,0 +1,120 @@
+USE [NexusDB]
+GO
+
+/****** Object:  StoredProcedure [dbo].[sp_desglosar_combustible]    Script Date: 19/12/2025 17:46:20 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE   PROCEDURE [dbo].[sp_desglosar_combustible]
+(
+    @IdEmpresa INT,
+    @IdCombustible INT,
+    @Litros DECIMAL(18,4),
+    @ImporteTotalFinal DECIMAL(18,4)
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -------------------------------------------------------------
+    -- 1. OBTENER IMPUESTOS (empgral + tImpuestos)
+    -------------------------------------------------------------
+
+    DECLARE @IVAporcentaje DECIMAL(18,6) = 0;
+    DECLARE @ImpuestosFijos DECIMAL(18,6) = 0;
+
+    -- Tabla para devolver cada impuesto
+    DECLARE @DetalleImpuestos TABLE (
+        tipo VARCHAR(100),
+        ImportePorLitro DECIMAL(18,6),
+        ImporteTotal DECIMAL(18,6)
+    );
+
+    -------------------------------------------------------------
+    -- Separamos IVA y los demás impuestos
+    -------------------------------------------------------------
+
+    SELECT 
+        @IVAporcentaje = CASE WHEN imp.tipo = 'IVA' THEN e.importe ELSE @IVAporcentaje END,
+        @ImpuestosFijos = @ImpuestosFijos +
+                          CASE WHEN imp.tipo <> 'IVA' THEN e.importe ELSE 0 END
+    FROM empgral e
+    INNER JOIN tImpuestos imp ON imp.id = e.idImpuesto
+    WHERE e.idEmpresa = @IdEmpresa
+      AND e.idCombustible = @IdCombustible;
+
+    -------------------------------------------------------------
+    -- 2. PRECIO FINAL POR LITRO
+    -------------------------------------------------------------
+    DECLARE @PrecioFinalLitro DECIMAL(18,6) = @ImporteTotalFinal / @Litros;
+
+    -------------------------------------------------------------
+    -- 3. CALCULAR PRECIO NETO (Neto = (Final - ImpFijos) / (1 + IVA))
+    -------------------------------------------------------------
+    DECLARE @NetoPorLitro DECIMAL(18,6);
+
+    SET @NetoPorLitro = (@PrecioFinalLitro - @ImpuestosFijos) / (1 + @IVAporcentaje);
+
+    IF @NetoPorLitro <= 0
+    BEGIN
+        RAISERROR('Los impuestos superan al precio final: datos inconsistentes',16,1);
+        RETURN;
+    END
+
+    -------------------------------------------------------------
+    -- 4. CALCULAR IVA POR LITRO
+    -------------------------------------------------------------
+    DECLARE @IVAPorLitro DECIMAL(18,6) = @NetoPorLitro * @IVAporcentaje;
+
+    -------------------------------------------------------------
+    -- 5. GUARDAR IMPUESTOS INDIVIDUALES EN TABLA
+    -------------------------------------------------------------
+    -- IVA primero
+    INSERT INTO @DetalleImpuestos(tipo, ImportePorLitro, ImporteTotal)
+    SELECT 
+        'IVA',
+        @IVAPorLitro,
+        @IVAPorLitro * @Litros;
+
+    -- Luego todos los demás impuestos fijos
+    INSERT INTO @DetalleImpuestos(tipo, ImportePorLitro, ImporteTotal)
+    SELECT 
+        imp.tipo,
+        e.importe,
+        e.importe * @Litros
+    FROM empgral e
+    INNER JOIN tImpuestos imp ON imp.id = e.idImpuesto
+    WHERE e.idEmpresa = @IdEmpresa
+      AND e.idCombustible = @IdCombustible
+      AND imp.tipo <> 'IVA';
+
+    -------------------------------------------------------------
+    -- 6. DEVOLVER RESULTADOS
+    -------------------------------------------------------------
+
+    -- Resumen general
+    SELECT
+        @Litros AS Litros,
+        @ImporteTotalFinal AS TotalFinal,
+        @PrecioFinalLitro AS PrecioFinalPorLitro,
+        @NetoPorLitro AS NetoPorLitro,
+        @IVAPorLitro AS IVAPorLitro,
+        @ImpuestosFijos AS ImpuestosFijosPorLitro;
+
+    -- Impuestos desglosados por fila
+    SELECT * FROM @DetalleImpuestos;
+
+    -- Total reconstruido
+    SELECT
+        (@NetoPorLitro + @IVAPorLitro + @ImpuestosFijos) AS TotalReconstruidoPorLitro,
+        (@NetoPorLitro * @Litros) AS NetoTotal,
+        (@IVAPorLitro * @Litros) AS IVATotal,
+        (@ImpuestosFijos * @Litros) AS ImpuestosFijosTotal;
+END
+
+GO
+
+
