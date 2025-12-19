@@ -1,4 +1,14 @@
-CREATE OR ALTER PROCEDURE [dbo].[sp_Clientes](
+USE [NexusDB]
+GO
+
+/****** Object:  StoredProcedure [dbo].[sp_Clientes]    Script Date: 19/12/2025 17:41:14 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE   PROCEDURE [dbo].[sp_Clientes](
 	@id INT = NULL,
 	@nombre VARCHAR (50) = NULL,
 	@direccion VARCHAR (50) = NULL,
@@ -44,7 +54,7 @@ BEGIN
 		SELECT 'OK' AS Resultado, 'Cliente actualizado correctamente' AS Mensaje, * 
 		FROM clientes WHERE id = @id
 	ELSE
-		SELECT 'OK' AS Resultado, 'No se detectaron cambios pero la operación fue exitosa' AS Mensaje
+		SELECT 'OK' AS Resultado, 'No se detectaron cambios pero la operaciï¿½n fue exitosa' AS Mensaje
 
 END
 
@@ -53,6 +63,7 @@ BEGIN
 	DELETE FROM clientes WHERE id = @id
 	SELECT 'OK' AS Resultado, 'Cliente eliminado correctamente' AS Mensaje
 END
+
 GO
 
 
