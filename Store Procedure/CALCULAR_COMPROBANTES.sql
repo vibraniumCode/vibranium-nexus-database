@@ -41,7 +41,7 @@ BEGIN
         @LitroMax DECIMAL(10,2),
 		@nroTiquet INT,
 		@grupoFactura INT,
-		@FechaActual VARCHAR(10) = CONVERT(VARCHAR(10), CAST(DATEADD(HOUR, -3, GETDATE()) AS DATE), 103),
+		@FechaActual VARCHAR(10) = CAST(SYSDATETIMEOFFSET() AT TIME ZONE 'Argentina Standard Time' AS DATE),
 		@HoraActual VARCHAR(8) = CONVERT(VARCHAR(8), DATEADD(HOUR, +3, GETDATE()), 108)
 
     SET @LitroMin = @LitrosPromedio - @MargenLitros;
