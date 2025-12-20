@@ -7,7 +7,10 @@ DECLARE
 	@cant_estaciones INT,
 	@cant_combustible INT,
 	@cant_impuestos INT,
-	@max_fact INT
+	@max_fact INT,
+	@total_hoy NUMERIC(18,2),
+	@total_ayer NUMERIC(18,2),
+	@nticket INT
 
 BEGIN
 	
@@ -17,11 +20,17 @@ BEGIN
 	SELECT @cant_impuestos   = COUNT(*)       FROM timpuestos
 	SELECT @max_fact         = MAX(n_factura) FROM [COMPROBANTE_HISTORICO] WHERE CONVERT(DATE, FECHA, 103) = CAST(GETDATE() AS DATE)
 
+	SELECT @total_hoy = SUM(importe) FROM [COMPROBANTE_HISTORICO] WHERE FECHA = CONVERT(VARCHAR(10), CAST(SYSDATETIMEOFFSET() AT TIME ZONE 'Argentina Standard Time' AS DATE), 103)
+	SELECT @total_ayer = SUM(importe) FROM [COMPROBANTE_HISTORICO] WHERE FECHA = CONVERT(VARCHAR(10), DATEADD( DAY, -1, CAST(SYSDATETIMEOFFSET() AT TIME ZONE 'Argentina Standard Time' AS DATE)), 103)
+	SELECT @nticket = COUNT(*) FROM [COMPROBANTE_HISTORICO] WHERE FECHA = CONVERT(VARCHAR(10), CAST(SYSDATETIMEOFFSET() AT TIME ZONE 'Argentina Standard Time' AS DATE), 103)
+
 	SELECT
 		 @cant_clientes AS Clientes
 		,@cant_estaciones AS Estaciones
 		,@cant_combustible AS Combustible
 		,@cant_impuestos AS Impuestos
 		,@max_fact AS Factura
-
+		,@total_hoy AS Thoy
+		,@total_ayer AS Tayer
+		,@nticket AS CantTicket
 END
