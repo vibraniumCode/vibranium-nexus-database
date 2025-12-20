@@ -1,0 +1,27 @@
+CREATE OR ALTER PROCEDURE SP_RESUMEN
+
+AS 
+
+DECLARE 
+	@cant_clientes INT,
+	@cant_estaciones INT,
+	@cant_combustible INT,
+	@cant_impuestos INT,
+	@max_fact INT
+
+BEGIN
+	
+	SELECT @cant_clientes    = COUNT(*)       FROM clientes
+	SELECT @cant_estaciones  = COUNT(*)       FROM empresas
+	SELECT @cant_combustible = COUNT(*)       FROM tcombustible
+	SELECT @cant_impuestos   = COUNT(*)       FROM timpuestos
+	SELECT @max_fact         = MAX(n_factura) FROM [COMPROBANTE_HISTORICO] WHERE CONVERT(DATE, FECHA, 103) = CAST(GETDATE() AS DATE)
+
+	SELECT
+		 @cant_clientes AS Clientes
+		,@cant_estaciones AS Estaciones
+		,@cant_combustible AS Combustible
+		,@cant_impuestos AS Impuestos
+		,@max_fact AS Factura
+
+END
