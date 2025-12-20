@@ -1,25 +1,23 @@
 USE [NexusDB]
 GO
-
-/****** Object:  StoredProcedure [dbo].[CALCULAR_COMPROBANTES]    Script Date: 19/12/2025 17:17:35 ******/
+/****** Object:  StoredProcedure [dbo].[CALCULAR_COMPROBANTES]    Script Date: 20/12/2025 02:47:04 ******/
 SET ANSI_NULLS ON
 GO
-
 SET QUOTED_IDENTIFIER ON
 GO
-
 /*
 BEGIN TRAN
 	EXEC CALCULAR_COMPROBANTES
-		@IdEmpresa = 1029,
+		@IdEmpresa = 50,
 		@ImporteTotal = 50000,
 		@LitrosPromedio = 50,
 		@MargenLitros = 2,
 		@ImporteMin = 4000,
-		@ImporteMax = 12000,@IdCombustible=8
+		@ImporteMax = 12000,
+		@IdCombustible=3
 ROLLBACK
 */
- CREATE PROCEDURE [dbo].[CALCULAR_COMPROBANTES]
+ ALTER PROCEDURE [dbo].[CALCULAR_COMPROBANTES]
 	@IdEmpresa INT,
     @ImporteTotal DECIMAL(18,2),
     @LitrosPromedio DECIMAL(10,2),
@@ -41,12 +39,14 @@ BEGIN
         @LitroMax DECIMAL(10,2),
 		@nroTiquet INT,
 		@grupoFactura INT,
-		@FechaActual VARCHAR(10) = CAST(SYSDATETIMEOFFSET() AT TIME ZONE 'Argentina Standard Time' AS DATE),
-		@HoraActual VARCHAR(8) = CONVERT(VARCHAR(8), DATEADD(HOUR, +3, GETDATE()), 108)
+		@FechaActual VARCHAR(10) = CONVERT(VARCHAR(10), CAST(SYSDATETIMEOFFSET() AT TIME ZONE 'Argentina Standard Time' AS DATE), 103),
+		@HoraActual VARCHAR(8) = CONVERT(VARCHAR(8), DATEADD(HOUR, +3, GETDATE()), 108),
+		@UltFactura INT
 
     SET @LitroMin = @LitrosPromedio - @MargenLitros;
     SET @LitroMax = @LitrosPromedio + @MargenLitros;
 	SET @grupoFactura = (SELECT CASE WHEN ID_GRUPO = 1 THEN 1 ELSE ID_GRUPO + 1 END FROM GRUPO_FACTURA)
+	SET @UltFactura = (SELECT MAX(n_factura) from [COMPROBANTE_HISTORICO])
 
     DECLARE @Comprobantes TABLE (
         NroComprobante INT,
@@ -98,14 +98,12 @@ BEGIN
 		N_LITROS  AS Litros,
 		IMPORTE   AS Importe 
 	FROM COMPROBANTE_HISTORICO
+	WHERE N_FACTURA > @UltFactura;
 
     -- Resultado resumen
     SELECT 
         COUNT(*) AS CantidadComprobantes,
         SUM(Importe) AS TotalCalculado
-    FROM @Comprobantes;
+    FROM @Comprobantes
 
 END;
-GO
-
-
