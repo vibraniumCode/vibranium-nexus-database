@@ -17,7 +17,8 @@ CREATE TABLE [dbo].[COMPROBANTE_HISTORICO](
 	[IMPORTE] [decimal](18, 2) NULL,
 	[ID_GRUPO] [int] NULL,
 	[FECHA] [varchar](10) NULL,
-	[HORA] [varchar](8) NULL
+	[HORA] [varchar](8) NULL,
+	[idEstacion] [INT] NULL
 ) ON [PRIMARY]
 
 GO
