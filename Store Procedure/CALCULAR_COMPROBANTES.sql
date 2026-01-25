@@ -1,6 +1,6 @@
 USE [NexusDB]
 GO
-/****** Object:  StoredProcedure [dbo].[CALCULAR_COMPROBANTES]    Script Date: 20/12/2025 02:47:04 ******/
+/****** Object:  StoredProcedure [dbo].[CALCULAR_COMPROBANTES]    Script Date: 25/01/2026 18:05:17 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -46,7 +46,8 @@ BEGIN
     SET @LitroMin = @LitrosPromedio - @MargenLitros;
     SET @LitroMax = @LitrosPromedio + @MargenLitros;
 	SET @grupoFactura = (SELECT CASE WHEN ID_GRUPO = 1 THEN 1 ELSE ID_GRUPO + 1 END FROM GRUPO_FACTURA)
-	SET @UltFactura = (SELECT MAX(n_factura) from [COMPROBANTE_HISTORICO])
+	SET @UltFactura = (SELECT MAX(n_factura) from [COMPROBANTE_HISTORICO] WHERE idEstacion = @IdEmpresa) 
+	--select @UltFactura, '@UltFactura'
 
     DECLARE @Comprobantes TABLE (
         NroComprobante INT,
@@ -85,20 +86,23 @@ BEGIN
         Importe,
 		@grupoFactura,
 		@FechaActual,
-		@HoraActual
+		@HoraActual,
+		@IdEmpresa
 		--CAST(@FechaActual AS DATE),  
 		--CONVERT(VARCHAR(8), DATEADD(HOUR, +3, GETDATE()), 108)
 
     FROM @Comprobantes;
-	
+	--select * from COMPROBANTE_HISTORICO order by 4 desc
 	UPDATE GRUPO_FACTURA SET ID_GRUPO = ID_GRUPO + 1
-
+	
 	SELECT 
 		N_FACTURA AS NroComprobante,
 		N_LITROS  AS Litros,
 		IMPORTE   AS Importe 
 	FROM COMPROBANTE_HISTORICO
-	WHERE N_FACTURA > @UltFactura;
+	WHERE 
+		idEstacion = @IdEmpresa AND
+		N_FACTURA > @UltFactura ;
 
     -- Resultado resumen
     SELECT 
