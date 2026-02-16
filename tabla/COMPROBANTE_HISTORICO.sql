@@ -18,12 +18,12 @@ CREATE TABLE [dbo].[COMPROBANTE_HISTORICO](
 	[ID_GRUPO] [int] NULL,
 	[FECHA] [varchar](10) NULL,
 	[HORA] [varchar](8) NULL,
-	[idEstacion] [INT] NULL
+	[idEstacion] [INT] NULL,
+	[idCliente] [INT] NULL,
 ) ON [PRIMARY]
 
 GO
 
 SET ANSI_PADDING OFF
 GO
-
 
