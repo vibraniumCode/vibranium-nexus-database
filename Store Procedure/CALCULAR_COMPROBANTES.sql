@@ -134,6 +134,7 @@ BEGIN
 	FROM COMPROBANTE_HISTORICO
 	WHERE 
 		idEstacion = @IdEmpresa AND
+		idCliente = @IdCliente  AND
 		N_FACTURA > @UltFactura;
     
     -- Resultado resumen
